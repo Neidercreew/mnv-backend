@@ -15,7 +15,8 @@ const usuarioSchema = new mongoose.Schema({
     {
       leccionId: String,
       completada: Boolean,
-      fechaCompletada: Date
+      fechaCompletada: Date,
+      paso: { type: Number, default: -1 }, // 👈 ÚNICO CAMBIO: trackea hasta qué paso llegó
     }
   ],
   fechaRegistro: {

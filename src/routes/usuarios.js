@@ -4,7 +4,9 @@ const {
   crearUsuario,
   obtenerUsuario,
   actualizarNivel,
-  guardarProgreso
+  guardarProgreso,
+  guardarPaso,      // 👈 nuevo
+  obtenerProgreso,  // 👈 nuevo
 } = require('../controllers/usuarioController');
 
 // POST /api/usuarios - crear usuario nuevo
@@ -18,5 +20,11 @@ router.put('/:id/nivel', actualizarNivel);
 
 // PUT /api/usuarios/:id/progreso - guardar progreso de leccion
 router.put('/:id/progreso', guardarProgreso);
+
+// POST /api/usuarios/:id/paso - guardar paso individual 👈 nuevo
+router.post('/:id/paso', guardarPaso);
+
+// GET /api/usuarios/:id/progreso - obtener progreso para dashboard 👈 nuevo
+router.get('/:id/progreso', obtenerProgreso);
 
 module.exports = router;

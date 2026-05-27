@@ -8,6 +8,7 @@ const crearUsuario = async (req, res) => {
     await usuario.save();
     res.status(201).json({
       mensaje: 'Usuario creado exitosamente',
+      usuarioId: usuario._id, // 👈 importante para Flutter
       usuario
     });
   } catch (error) {
@@ -40,16 +41,13 @@ const actualizarNivel = async (req, res) => {
     if (!usuario) {
       return res.status(404).json({ mensaje: 'Usuario no encontrado' });
     }
-    res.json({
-      mensaje: 'Nivel actualizado',
-      usuario
-    });
+    res.json({ mensaje: 'Nivel actualizado', usuario });
   } catch (error) {
     res.status(500).json({ mensaje: 'Error actualizando nivel', error });
   }
 };
 
-// Guardar progreso de una lección
+// Guardar progreso de una lección (función original)
 const guardarProgreso = async (req, res) => {
   try {
     const { leccionId } = req.body;
@@ -58,7 +56,6 @@ const guardarProgreso = async (req, res) => {
       return res.status(404).json({ mensaje: 'Usuario no encontrado' });
     }
 
-    // Verificar si la lección ya está completada
     const leccionExiste = usuario.progreso.find(
       p => p.leccionId === leccionId
     );
@@ -72,12 +69,66 @@ const guardarProgreso = async (req, res) => {
       await usuario.save();
     }
 
-    res.json({
-      mensaje: 'Progreso guardado',
-      usuario
-    });
+    res.json({ mensaje: 'Progreso guardado', usuario });
   } catch (error) {
     res.status(500).json({ mensaje: 'Error guardando progreso', error });
+  }
+};
+
+// 👇 NUEVO: Guardar paso individual del tutorial
+const guardarPaso = async (req, res) => {
+  try {
+    const { leccionId, paso } = req.body;
+    const usuario = await Usuario.findById(req.params.id);
+    if (!usuario) {
+      return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+    }
+
+    const leccionExiste = usuario.progreso.find(
+      p => p.leccionId === leccionId
+    );
+
+    if (leccionExiste) {
+      // Solo actualiza si avanzó más
+      if (paso > leccionExiste.paso) {
+        leccionExiste.paso = paso;
+      }
+      // Si llegó al último paso (6), marca como completada
+      if (paso >= 6) {
+        leccionExiste.completada = true;
+        leccionExiste.fechaCompletada = new Date();
+      }
+    } else {
+      // Primera vez que toca esta lección
+      usuario.progreso.push({
+        leccionId,
+        paso,
+        completada: paso >= 6,
+        fechaCompletada: paso >= 6 ? new Date() : null,
+      });
+    }
+
+    await usuario.save();
+    res.json({ mensaje: 'Paso guardado', paso });
+  } catch (error) {
+    res.status(500).json({ mensaje: 'Error guardando paso', error });
+  }
+};
+
+//  NUEVO: Obtener progreso completo (para el dashboard)
+const obtenerProgreso = async (req, res) => {
+  try {
+    const usuario = await Usuario.findById(req.params.id);
+    if (!usuario) {
+      return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+    }
+    res.json({
+      nombre: usuario.nombre,
+      nivel: usuario.nivel,
+      progreso: usuario.progreso,
+    });
+  } catch (error) {
+    res.status(500).json({ mensaje: 'Error obteniendo progreso', error });
   }
 };
 
@@ -85,5 +136,7 @@ module.exports = {
   crearUsuario,
   obtenerUsuario,
   actualizarNivel,
-  guardarProgreso
+  guardarProgreso,
+  guardarPaso,     // 👈 nuevo
+  obtenerProgreso, // 👈 nuevo
 };
