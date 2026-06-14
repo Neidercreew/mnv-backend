@@ -8,7 +8,7 @@ const crearUsuario = async (req, res) => {
     await usuario.save();
     res.status(201).json({
       mensaje: 'Usuario creado exitosamente',
-      usuarioId: usuario._id, // 👈 importante para Flutter
+      usuarioId: usuario._id, // importante para Flutter
       usuario
     });
   } catch (error) {
@@ -75,10 +75,10 @@ const guardarProgreso = async (req, res) => {
   }
 };
 
-// 👇 NUEVO: Guardar paso individual del tutorial
+// NUEVO: Guardar paso individual del tutorial
 const guardarPaso = async (req, res) => {
   try {
-    const { leccionId, paso } = req.body;
+    const { leccionId, paso, completada } = req.body; // 👈 agrega completada
     const usuario = await Usuario.findById(req.params.id);
     if (!usuario) {
       return res.status(404).json({ mensaje: 'Usuario no encontrado' });
@@ -89,22 +89,20 @@ const guardarPaso = async (req, res) => {
     );
 
     if (leccionExiste) {
-      // Solo actualiza si avanzó más
       if (paso > leccionExiste.paso) {
         leccionExiste.paso = paso;
       }
-      // Si llegó al último paso (6), marca como completada
-      if (paso >= 6) {
+      // Marca completada si llegó al último paso O si Flutter lo indica explícitamente
+      if (paso >= 6 || completada === true) {
         leccionExiste.completada = true;
         leccionExiste.fechaCompletada = new Date();
       }
     } else {
-      // Primera vez que toca esta lección
       usuario.progreso.push({
         leccionId,
         paso,
-        completada: paso >= 6,
-        fechaCompletada: paso >= 6 ? new Date() : null,
+        completada: paso >= 6 || completada === true,
+        fechaCompletada: (paso >= 6 || completada === true) ? new Date() : null,
       });
     }
 
@@ -137,6 +135,6 @@ module.exports = {
   obtenerUsuario,
   actualizarNivel,
   guardarProgreso,
-  guardarPaso,     // 👈 nuevo
-  obtenerProgreso, // 👈 nuevo
+  guardarPaso,     //  nuevo
+  obtenerProgreso, //  nuevo
 };
